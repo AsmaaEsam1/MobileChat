@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "201832399715",
+    "firebase_url": "https://mobilechat-d4144.firebaseio.com",
+    "project_id": "mobilechat-d4144",
+    "storage_bucket": "mobilechat-d4144.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:201832399715:android:b5fe2c3382b727ff6f4956",
+        "android_client_info": {
+          "package_name": "com.mobilechat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "201832399715-6bvdjf1s76b7gu8gnrpev1cupvjh1nso.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOlvLMa_u5-QPXr6F_0KFI4YCxGVqutG8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "201832399715-6bvdjf1s76b7gu8gnrpev1cupvjh1nso.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
