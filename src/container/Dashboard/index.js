@@ -158,7 +158,8 @@ useLayoutEffect(() => {
      
         <SafeAreaView style={[globalStyle.flex1,{backgroundColor:color.BLACK}]}>
            
-        <Tabs initialPage={0} tabBarBackgroundColor={color.BLACK} 
+           
+           <Tabs initialPage={0} tabBarBackgroundColor={color.BLACK} 
         tabBarUnderlineStyle={{height:1}}
         tabContainerStyle={{elevation:0}}>
      <Tab 
@@ -276,7 +277,7 @@ useLayoutEffect(() => {
             />
           )}/>           
      </Tab>
-    </Tabs>   
+    </Tabs>  
   </SafeAreaView>
     );
 }
