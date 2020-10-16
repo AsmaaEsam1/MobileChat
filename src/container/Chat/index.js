@@ -12,13 +12,39 @@ import { deviceHeight } from "../../utility/styleHelper/appStyle";
 import { smallDeviceHeight } from "../../utility/constants";
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import {AudioRecorder, AudioUtils} from 'react-native-audio';
+import { format } from 'date-fns';
+import AudioRecorderPlayer, { 
+  AVEncoderAudioQualityIOSType,
+  AVEncodingOption, 
+  AudioEncoderAndroidType,
+  AudioSet,
+  AudioSourceAndroidType, 
+ } from 'react-native-audio-recorder-player';
+ import moment from 'moment/min/moment-with-locales.min'
+import { GiftedChat } from 'react-native-gifted-chat';
+import { it } from 'date-fns/locale';
 
-const Chat = ({route, navigation}) => {
+ let audioRecorderPlayer = new AudioRecorderPlayer();
+ const Chat = ({route, navigation}) => {
     const {params} = route;
     const {name, img, imgText, guestUserId, currentUserId} = params;
     const [msgValue, setMsgValue] = useState('');
     const [messages, setMessages] = useState([]);
-    useLayoutEffect(()=>{
+    const [recordTime,setRecordTime] = useState('')
+    const [recordSecs,setRecordSecs] = useState(0)
+    const [currentPositionSec, setCurrentPositionSec]=useState(0)
+    const [currentDurationSec,setCurrentDurationSec] = useState(0)
+    const [playTime,setPlayTime] = useState('00:00')
+    const [duration,setDuration] = useState('00:00')
+    const [active,setActive] = useState([])
+    const [startrecord,setStartRecord] = useState(true)
+    const [startplay,setStartPlay] = useState(true)
+
+    let num = new Date().getTime();
+    const path = AudioUtils.DocumentDirectoryPath+ '/test'+num+'.m4a';
+    audioRecorderPlayer.setSubscriptionDuration(0.09);
+
+   React.useLayoutEffect(()=>{
         navigation.setOptions({
         headerLeft: () => (
           <View flexDirection= "row" >
@@ -40,7 +66,7 @@ const Chat = ({route, navigation}) => {
         headerRight: () => (
             <View flexDirection= "row" >
                
-            <TouchableOpacity onPress={() =>{nameTap()}}> 
+            <TouchableOpacity onPress={() =>{callTap()}}> 
             <Button transparent>
             <Icon type="MaterialIcons" name ="call" size = {50} style= {{color:color.WHITE}}/>
             </Button>
@@ -55,6 +81,7 @@ const Chat = ({route, navigation}) => {
         });
     },[navigation])
 
+
    React.useEffect(()=>{
         try {
           //connected to real-time database and sent messages
@@ -62,6 +89,7 @@ const Chat = ({route, navigation}) => {
             .ref('messages')
             .child(currentUserId)
             .child(guestUserId)
+            .orderByChild('createdAt')
             .on('value',(dataSnapshot)=>{
                 let msgs = [];
                 dataSnapshot.forEach((child)=>{
@@ -70,9 +98,13 @@ const Chat = ({route, navigation}) => {
                         recievedBy:child.val().message.reciever,
                         msg:child.val().message.msg,
                         img:child.val().message.img,
+                        audio:child.val().message.audio,
+                        audioDuration:child.val().message.audioDuration,
                         createdAt:child.val().message.createdAt,
+                        dates:child.val().message.date,
                     });
-                });
+                   
+                });               
                 setMessages(msgs.reverse());
             });
         } catch (error) {
@@ -84,12 +116,12 @@ const handleSend = () =>{
   
   setMsgValue('')
     if(msgValue){
-      senderMsg(msgValue, currentUserId, guestUserId,'')
+      senderMsg(msgValue, currentUserId, guestUserId,'','','')
       .then(()=>{})
       .catch((err)=>alert(err))
 
       // * guest user
-     recieverMsg(msgValue, currentUserId, guestUserId,'')
+     recieverMsg(msgValue, currentUserId, guestUserId,'','','')
       .then(()=>{})
       .catch((err)=>alert(err))
     }
@@ -141,6 +173,55 @@ const startRecord =async  () => {
       return;
     }
   }
+  const uri = await audioRecorderPlayer.startRecorder(path).catch(err => console.log(err.message));
+  audioRecorderPlayer.addRecordBackListener((e) => {
+     setRecordSecs( e.current_position)
+     setRecordTime( audioRecorderPlayer.mmss(Math.floor(e.current_position / 1000)))
+  });
+  console.log(`uri: ${uri}`);
+  setStartRecord(false)
+}
+const onStopRecord = async () => {
+  const result = await audioRecorderPlayer.stopRecorder().catch(err => console.log(err.message));
+  audioRecorderPlayer.removeRecordBackListener();
+  setRecordSecs(0)
+  setRecordTime('')
+  setStartRecord(true)
+  console.log(result);
+  senderMsg(msgValue, currentUserId, guestUserId, '',result, recordTime)
+  .then(() => {})
+  .catch((err) => alert(err));
+
+// * guest user
+recieverMsg(msgValue, currentUserId, guestUserId, '',result, recordTime)
+  .then(() => {})
+  .catch((err) => alert(err));
+}
+
+const onStartPlay = async (audioPath,item) => {
+  console.log('onStartPlay');
+  setActive(item)
+  setStartPlay(false)
+  const msg = await audioRecorderPlayer.startPlayer(audioPath).catch(err =>console.log(err));
+  audioRecorderPlayer.setVolume(1.0);
+  console.log(msg);
+ audioRecorderPlayer.addPlayBackListener((e) => {
+    if (e.current_position === e.duration) {
+      console.log('finished');
+      audioRecorderPlayer.stopPlayer().catch(err => console.log(err.message));
+      setStartPlay(true)
+    } 
+  
+      setCurrentPositionSec(e.current_position)
+      setPlayTime( audioRecorderPlayer.mmss(Math.floor(e.current_position / 1000)))
+      setCurrentDurationSec (e.duration)
+      setDuration ( audioRecorderPlayer.mmss(Math.floor(e.duration / 1000)))  
+  });
+};
+
+const onPausePlay = async (e) => {
+  setStartPlay(true)
+  await audioRecorderPlayer.pausePlayer().catch(err => console.log(err));
 }
 //get uri of image and send or recevie img in real-time database
     const handleCamera = () => {
@@ -159,13 +240,13 @@ const startRecord =async  () => {
             // get uri
             let source = response.uri;
     
-            senderMsg(msgValue, currentUserId, guestUserId, source)
+            senderMsg(msgValue, currentUserId, guestUserId, source,'')
               .then(() => {})
               .catch((err) => alert(err));
     
             // * guest user
     
-            recieverMsg(msgValue, currentUserId, guestUserId, source)
+            recieverMsg(msgValue, currentUserId, guestUserId, source,'')
               .then(() => {})
               .catch((err) => alert(err));
           }
@@ -180,8 +261,8 @@ const startRecord =async  () => {
     const imgTap = (chatImg) => {
       navigation.navigate('ShowFullImg', {name, img:chatImg})
     }
-    // On name Tap
-    const nameTap = () => {
+    // On start Calling Tap
+    const callTap = () => {
       navigation.navigate('SenderVoiceCalling', {name,img})
     }
 
@@ -191,59 +272,73 @@ const startRecord =async  () => {
             style={[globalStyle.flex1, {backgroundColor:color.BLACK}]}
             >
           <TouchableWithoutFeedback style={[globalStyle.flex1]} onPress={Keyboard.dismiss}>
-            <Fragment>
+            <Fragment> 
         <FlatList
         inverted
         data={messages}
         keyExtractor={(_, index)=>index.toString()}
         renderItem={({item})=>(
-
+        <View> 
+        <Text style={{color:color.SILVER,alignItems:'center',alignSelf:'center'}}>
+        {item.dates}
+        </Text>
         <ChatBox
         msg={item.msg}
         userId={item.sendBy}
         date= {item.createdAt}
         img={item.img}
         onImgTap={()=> imgTap(item.img)}
-        />
-        
-            )}
-        />   
+        onAudioTap={()=>onStartPlay(item.audio,item) }
+        onAudioPause={()=>onPausePlay()}
+        playTimes= {active == item ?(
+          playTimes = playTime
+         ):( 
+          playTimes= item.audioDuration)}
+
+        show={active == item ?(
+            show = startplay
+           ):( 
+            show= true
+             )}/>
+        </View>
+        )}/> 
+
         {/*Send Message*/} 
+
         <View style={styles.sendMessageContainer}>
             <InputField
             placeholder = "Type Here"
             numberOfLines={10}
             inputStyle={styles.input}
             value={msgValue}
-            onChangeText={(text)=>handleOnChange(text)}
-            />
+            onChangeText={(text)=>handleOnChange(text)} />
+
         <View style={styles.sendBtnContainer}>
-          <TouchableOpacity onPress={()=>startRecord()}>
+        <Text style={{color:color.WHITE,marginRight:10}}>{recordTime}</Text>
+         {startrecord ?( <TouchableOpacity onPress={()=>startRecord()}>
             <MaterialCommunityIcons
             name = "microphone"
             color={color.WHITE}
-            size={35}
-            
-            />
+            size={35}/>
           </TouchableOpacity>
-        
+          ):(<TouchableOpacity onPress={()=>onStopRecord()}>
+            <Icon
+            name = "stop-circle-outline"
+            style={{color:color.WHITE}} fontSize={35}/>
+          </TouchableOpacity>
+          )}
           <TouchableOpacity onPress={()=>handleCamera()}>
-
             <MaterialCommunityIcons
             name = "attachment"
             color={color.WHITE}
-            size={35}
-            
-            />
+            size={35}/>
              </TouchableOpacity>
-             <TouchableOpacity   onPress={()=>handleSend()}>
 
+             <TouchableOpacity   onPress={()=>handleSend()}>
              <MaterialCommunityIcons
                   name="send-circle"
                   color={color.WHITE}
-                  size={35}
-                
-                />
+                  size={35} />
              </TouchableOpacity>
         </View>
         </View>
