@@ -1,9 +1,9 @@
 import { format } from 'date-fns';
 import firebase from 'react-native-firebase'
+import moment from 'moment/min/moment-with-locales.min'
 
-export const senderMsg = async(msgValue, currentUserId, guestUserId, img) => {
-    try {
-        
+export const senderMsg = async(msgValue, currentUserId, guestUserId, img, audio,audioDuration) => {
+    try {   
         return  firebase 
         .database()
         .ref('messages/'+ currentUserId)
@@ -14,7 +14,10 @@ export const senderMsg = async(msgValue, currentUserId, guestUserId, img) => {
             reciever:guestUserId,
             msg: msgValue,
             img:img,
+            audio:audio,
+            audioDuration:audioDuration,
             createdAt: format(new Date().getTime() ,'h:mm a'),
+            date:moment(new Date()).format('ll').toUpperCase(),
             }
         })
     } catch (error) {
@@ -22,7 +25,7 @@ export const senderMsg = async(msgValue, currentUserId, guestUserId, img) => {
     }
 };
 
-export const recieverMsg = async (msgValue, currentUserId, guestUserId, img) => {
+export const recieverMsg = async (msgValue, currentUserId, guestUserId, img, audio,audioDuration) => {
     try {
         return firebase 
         .database()
@@ -34,7 +37,10 @@ export const recieverMsg = async (msgValue, currentUserId, guestUserId, img) => 
             reciever:guestUserId,
             msg: msgValue,
             img:img,
-            createdAt: format(new Date(msgValue.createdAt),'YYYY-MM-DD h:mm a'),
+            audio: audio,
+            audioDuration:audioDuration,
+            createdAt: format(new Date().getTime(),'h:mm a'),
+            date:moment(new Date()).format('ll').toUpperCase(),
             }
         })
     } catch (error) {
