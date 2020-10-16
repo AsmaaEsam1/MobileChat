@@ -338,7 +338,7 @@ const onPausePlay = async (e) => {
              <MaterialCommunityIcons
                   name="send-circle"
                   color={color.WHITE}
-                  size={35} />
+                  size={30} />
              </TouchableOpacity>
         </View>
         </View>
