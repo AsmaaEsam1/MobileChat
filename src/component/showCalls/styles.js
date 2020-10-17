@@ -22,5 +22,5 @@ export default StyleSheet.create({
     backgroundColor: color.DARK_GRAY,
   },
   thumbnailName: { fontSize: 30, color: color.WHITE, fontWeight: "bold" },
-  profileName: { fontSize: 20, color: color.WHITE, fontWeight: "bold" },
+  profileName: { fontSize: 20, color: color.WHITE, fontWeight: "bold", width:"100%", marginLeft:10},
 });
