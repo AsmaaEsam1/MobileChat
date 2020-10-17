@@ -1,4 +1,4 @@
-import React,{useLayoutEffect, useState, useEffect, Fragment} from 'react'
+import React,{ useState, Fragment} from 'react'
 import {View,Text,SafeAreaView,FlatList, KeyboardAvoidingView, TouchableWithoutFeedback, Platform, Keyboard, TouchableHighlightComponent, PermissionsAndroid} from 'react-native'
 import ImagePicker from 'react-native-image-picker'
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
@@ -11,18 +11,8 @@ import { Button,Icon, Thumbnail} from 'native-base'
 import { deviceHeight } from "../../utility/styleHelper/appStyle";
 import { smallDeviceHeight } from "../../utility/constants";
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import {AudioRecorder, AudioUtils} from 'react-native-audio';
-import { format } from 'date-fns';
-import AudioRecorderPlayer, { 
-  AVEncoderAudioQualityIOSType,
-  AVEncodingOption, 
-  AudioEncoderAndroidType,
-  AudioSet,
-  AudioSourceAndroidType, 
- } from 'react-native-audio-recorder-player';
- import moment from 'moment/min/moment-with-locales.min'
-import { GiftedChat } from 'react-native-gifted-chat';
-import { it } from 'date-fns/locale';
+import { AudioUtils} from 'react-native-audio';
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 
  let audioRecorderPlayer = new AudioRecorderPlayer();
  const Chat = ({route, navigation}) => {
