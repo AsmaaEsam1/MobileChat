@@ -14,17 +14,17 @@ const SignUp = ({navigation}) =>{
     const { dispatchLoaderAction } = globalState;
     const [showLogo, toggleLogo] = useState(true);
     const [credentials,setCredentials] = useState({
-        name:"",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        phoneNumber:"",
+        name:'',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        phoneNumber:'',
     });
     
     const { email, password, confirmPassword, name } = credentials;
     
     const setInitialState = () => {
-        setCredential({ email: '', password: '', confirmPassword: '' });
+        setCredentials({name: '', email: '', password: '', confirmPassword: '' });
       };
     
    const onSignUpPress = () => {
@@ -113,9 +113,7 @@ const SignUp = ({navigation}) =>{
                     <Logo/>
                 </View>
                     )}
-            
-            <RoundCornerButton title="Confirm Code" onPress={() => PhoneSignIn()} />
-
+        
             <InputField
               placeholder="Enter name"
               value={name}
@@ -125,7 +123,7 @@ const SignUp = ({navigation}) =>{
             />
             <InputField
               placeholder="Enter email"
-              value={email}
+              value={email.trimEnd()}
               onChangeText={(text) => handleOnChange("email", text)}
               onFocus={() => handleFocus()}
               onBlur={() => handleBlur()}

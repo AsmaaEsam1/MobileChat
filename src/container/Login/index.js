@@ -105,7 +105,7 @@ const Login = ({navigation}) =>{
 
                 <InputField 
                 placeholder="Enter Email" 
-                value={email}
+                value={email.trimEnd()}
                 onChangeText = {(text) => handleOnChange('email',text)}
                 onFocus={()=>handleFocus()}
                 onBlur={()=>handleBlur()}/>
@@ -113,7 +113,7 @@ const Login = ({navigation}) =>{
                 <InputField 
                 placeholder="Enter Password" 
                 secureTextEntry={true}
-                value={password}
+                value={password.trimEnd()}
                 onChangeText = {(text) => handleOnChange('password',text)}/>
 
                 <RoundCornerButton title="Login" onPress={() => onLoginPress()}/>
