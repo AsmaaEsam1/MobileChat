@@ -58,7 +58,7 @@ const SignUp = ({navigation}) =>{
               let profileImg = '';
                AddUser(name, email, uid, profileImg)
                
-                navigation.replace('Dashboard');
+                navigation.navigate('Dashboard');
                })
                .catch((err)=>{
                 dispatchLoaderAction({

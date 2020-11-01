@@ -51,7 +51,7 @@ const Login = ({navigation}) =>{
                 type:LOADING_STOP,
             });
             setInitialState();
-            navigation.replace('Dashboard')
+            navigation.navigate('Dashboard')
            })
            .catch((err)=>{
                dispatchLoaderAction({

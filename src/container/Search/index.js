@@ -3,7 +3,7 @@ import {View, SafeAreaView,FlatList,StyleSheet} from 'react-native'
 import { color, globalStyle } from '../../utility'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import { Store } from '../../context/store'
-import{Header, Icon, Input, Item, Right} from 'native-base'
+import{Header, Icon, Input, Item} from 'native-base'
 import {LOADING_START,LOADING_STOP} from '../../context/actions/types'
 import firebase from 'react-native-firebase'
 import { ShowAllUsers } from '../../component'
@@ -20,7 +20,7 @@ const [state, setState] = useState({ data: []})
 const [data, setData] = useState([]);
 const [text, setText] = useState('');
 
-   React.useEffect(() => {
+   useEffect(() => {
         dispatchLoaderAction({
           type: LOADING_START,
         });
@@ -132,7 +132,7 @@ const [text, setText] = useState('');
             <View style={styles.MainContainer}>
         <Header searchBar rounded style={{backgroundColor:'#000'}}>
           <Item>
-          <TouchableOpacity onPress={()=>{navigation.replace('Dashboard')}}>
+          <TouchableOpacity onPress={()=>{navigation.navigate('Dashboard')}}>
                 <Icon name ="arrow-back" style={{color:color.BLACK}}/>
           </TouchableOpacity>
             <Icon name="search" />

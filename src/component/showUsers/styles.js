@@ -22,7 +22,7 @@ export default StyleSheet.create({
     backgroundColor: color.DARK_GRAY,
   },
   thumbnailName: { fontSize: 30, color: color.WHITE, fontWeight: "bold" },
-  profileName: { fontSize: 20, color: color.WHITE, fontWeight: "bold" , width:"100%"},
+  profileName: { fontSize: 18, color: color.WHITE, fontWeight: "bold" , width:"100%"},
   Badge:{height: 24, width: 20, backgroundColor: '#ECE5DD', 
   justifyContent: 'center', textAlign: 'center',marginTop: 5},
 });

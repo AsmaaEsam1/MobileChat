@@ -1,5 +1,5 @@
 import React,{useLayoutEffect, useContext, useState, useEffect, Fragment} from 'react'
-import {Text,View, Alert, SafeAreaView,FlatList, Image} from 'react-native'
+import {Text,View, Alert, SafeAreaView} from 'react-native'
 import ImagePicker from 'react-native-image-picker'
 import { LogOutUser, UpdateUser } from '../../network'
 import{Profile} from '../../component'
@@ -8,6 +8,9 @@ import firebase from 'react-native-firebase'
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons'
 import { color, globalStyle } from '../../utility'
 import { TouchableOpacity } from 'react-native-gesture-handler'
+import StickyHeader from '../../component/stickyHeader'
+import {smallDeviceHeight} from '../../utility/constants'
+import { deviceHeight } from '../../utility/styleHelper/appStyle'
 import { Store } from '../../context/store'
 import{Button, Icon} from 'native-base'
 
@@ -15,6 +18,8 @@ const Settings = ({navigation}) =>{
   const uuid = firebase.auth().currentUser.uid;  
   const globalState = useContext(Store)
   const {dispatchLoaderAction} = globalState
+  const [getScrollPosition, setScrollPosition] = useState(0);
+
   const [userDetail, setUserDetail] = useState({
     id: '',
     name: '',
@@ -50,7 +55,7 @@ const Settings = ({navigation}) =>{
             </TouchableOpacity>
             ),
             headerLeft: () => (
-                <TouchableOpacity onPress={()=>{navigation.replace('Dashboard')}}>
+                <TouchableOpacity onPress={()=>{navigation.navigate('Dashboard')}}>
                 <Button transparent>
                 <Icon name ="arrow-back" style={{color:color.WHITE}}/>
                 </Button>
@@ -59,9 +64,12 @@ const Settings = ({navigation}) =>{
     })
     }, [navigation])
 
- React.useEffect(() => {
+useEffect(() => {
         try{
           //Get current user from Real-time database in firebase
+          dispatchLoaderAction({
+            type: LOADING_START,
+          });
           firebase.database()
           .ref('users')
           .on('value',(dataSnapshot)=>{
@@ -177,7 +185,7 @@ const Settings = ({navigation}) =>{
         LogOutUser()
       
            .then(()=>{
-                navigation.replace('Login')
+                navigation.navigate('Login')
             })
             .catch((err)=> alert(err))
     
@@ -198,15 +206,32 @@ const Settings = ({navigation}) =>{
       })
     }
   }
+  const getOpacity = () =>{
+    if(deviceHeight<smallDeviceHeight){
+      return deviceHeight/4;
+    }
+    else{
+      return deviceHeight/6;
+    }
+  }
+
   return(     
      
     <SafeAreaView style={[globalStyle.flex1,{backgroundColor:color.BLACK}]}>
         <Fragment>
+        {
+            getScrollPosition > getOpacity() && (
+              <StickyHeader
+              name={name}
+              img={profileImg}
+              onImgTap={()=>imgTap(profileImg,name)}/>
+            )} 
             <Profile
               img={profileImg}
               onImgTap={() => imgTap(profileImg, name)}
               onEditImgTap={() => selectImage()}
               name={name}
+              
             />      
         </Fragment>
     </SafeAreaView>

@@ -8,6 +8,7 @@ export const AddUser = async(name, email, uid, profileImage) => {
             email: email,
             uuid: uid,
             profileImage: profileImage,
+            lastMessage: ''
         })
     } catch (error) {
         return error

@@ -1,4 +1,4 @@
-import React,{ useState, Fragment} from 'react'
+import React,{ useState, Fragment,useLayoutEffect,useEffect} from 'react'
 import {View,Text,SafeAreaView,FlatList, KeyboardAvoidingView, TouchableWithoutFeedback, Platform, Keyboard, TouchableHighlightComponent, PermissionsAndroid} from 'react-native'
 import ImagePicker from 'react-native-image-picker'
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
@@ -13,6 +13,8 @@ import { smallDeviceHeight } from "../../utility/constants";
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { AudioUtils} from 'react-native-audio';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import moment from 'moment/min/moment-with-locales.min'
+import { it } from 'date-fns/locale';
 
  let audioRecorderPlayer = new AudioRecorderPlayer();
  const Chat = ({route, navigation}) => {
@@ -29,16 +31,18 @@ import AudioRecorderPlayer from 'react-native-audio-recorder-player';
     const [active,setActive] = useState([])
     const [startrecord,setStartRecord] = useState(true)
     const [startplay,setStartPlay] = useState(true)
-
+    const [multiDate,setMultiDate] = useState('')
+    const [currentMsg, setCurrentMsg] = useState([])
     let num = new Date().getTime();
     const path = AudioUtils.DocumentDirectoryPath+ '/test'+num+'.m4a';
     audioRecorderPlayer.setSubscriptionDuration(0.09);
+    let msgs = [];
 
-   React.useLayoutEffect(()=>{
+  useLayoutEffect(()=>{
         navigation.setOptions({
         headerLeft: () => (
           <View flexDirection= "row" >
-          <TouchableOpacity onPress={()=>{navigation.replace('Dashboard')}}>
+          <TouchableOpacity onPress={()=>{navigation.navigate('Dashboard')}}>
                 <Button transparent>
                 <Icon name ="arrow-back" style={{color:color.WHITE}}/>
                 </Button>
@@ -72,7 +76,7 @@ import AudioRecorderPlayer from 'react-native-audio-recorder-player';
     },[navigation])
 
 
-   React.useEffect(()=>{
+  useEffect(()=>{
         try {
           //connected to real-time database and sent messages
             firebase.database()
@@ -81,8 +85,11 @@ import AudioRecorderPlayer from 'react-native-audio-recorder-player';
             .child(guestUserId)
             .orderByChild('createdAt')
             .on('value',(dataSnapshot)=>{
+                let date = [];
+                let allData =[];
                 let msgs = [];
                 dataSnapshot.forEach((child)=>{
+                  
                     msgs.push({
                         sendBy:child.val().message.sender,
                         recievedBy:child.val().message.reciever,
@@ -93,17 +100,21 @@ import AudioRecorderPlayer from 'react-native-audio-recorder-player';
                         createdAt:child.val().message.createdAt,
                         dates:child.val().message.date,
                     });
-                   
-                });               
+                    
+                });
                 setMessages(msgs.reverse());
+                let itemDate = messages.map(item => item.dates)
+            setMultiDate(msgs.map((item) => item.dates)[msgs.length-1])
+            console.log(multiDate)
             });
+           
+
         } catch (error) {
             alert(error)
         }
     },[])
     //send and recevied messages bettween different users 
-const handleSend = () =>{
-  
+const handleSend = () =>{  
   setMsgValue('')
     if(msgValue){
       senderMsg(msgValue, currentUserId, guestUserId,'','','')
@@ -114,7 +125,8 @@ const handleSend = () =>{
      recieverMsg(msgValue, currentUserId, guestUserId,'','','')
       .then(()=>{})
       .catch((err)=>alert(err))
-    }
+    } 
+
 }
 // recording voice and send to real time database
 const startRecord =async  () => {
@@ -255,44 +267,54 @@ const onPausePlay = async (e) => {
     const callTap = () => {
       navigation.navigate('SenderVoiceCalling', {name,img})
     }
+    const renderChat = (item)=>{
+      if(item.dates != multiDate){
+        setMultiDate(item.dates)
+      }
+       return(
+       <View>
+         {   
+          <Text style = {{color:color.WHITE ,alignSelf:'center'}}>{item.dates}</Text> 
+    }
 
-      return(
+    <ChatBox
+    msg={item.msg}
+    userId={item.sendBy}
+    date= {item.createdAt}
+    img={item.img}
+    onImgTap={()=> imgTap(item.img)}
+    onAudioTap={()=>onStartPlay(item.audio,item) }
+    onAudioPause={()=>onPausePlay()}
+    playTimes= {active == item ?
+      playTimes = playTime :
+      playTimes= item.audioDuration}
+
+    show={active == item ?
+        show = startplay: show= true
+         }/>
+     </View>)
+    }
+
+    
+
+      return (
+        
         <SafeAreaView style={[globalStyle.flex1, {backgroundColor:color.BLACK}]}>
           <KeyboardAvoidingView keyboardVerticalOffset={deviceHeight > smallDeviceHeight ? 100:70}
             style={[globalStyle.flex1, {backgroundColor:color.BLACK}]}
             >
           <TouchableWithoutFeedback style={[globalStyle.flex1]} onPress={Keyboard.dismiss}>
-            <Fragment> 
+        <Fragment>
+        
         <FlatList
         inverted
         data={messages}
-        keyExtractor={(_, index)=>index.toString()}
-        renderItem={({item})=>(
-        <View> 
-        <Text style={{color:color.SILVER,alignItems:'center',alignSelf:'center'}}>
-        {item.dates}
-        </Text>
-        <ChatBox
-        msg={item.msg}
-        userId={item.sendBy}
-        date= {item.createdAt}
-        img={item.img}
-        onImgTap={()=> imgTap(item.img)}
-        onAudioTap={()=>onStartPlay(item.audio,item) }
-        onAudioPause={()=>onPausePlay()}
-        playTimes= {active == item ?(
-          playTimes = playTime
-         ):( 
-          playTimes= item.audioDuration)}
-
-        show={active == item ?(
-            show = startplay
-           ):( 
-            show= true
-             )}/>
-        </View>
-        )}/> 
-
+        keyExtractor={(indexs)=>indexs}
+        renderItem={
+          ()=> renderChat()
+          
+}/>
+         
         {/*Send Message*/} 
 
         <View style={styles.sendMessageContainer}>
@@ -336,6 +358,7 @@ const onPausePlay = async (e) => {
         </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
         </SafeAreaView>
-    )
+        )
+    
 };
 export default Chat;

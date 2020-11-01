@@ -1,15 +1,15 @@
-import React,{useLayoutEffect, useContext, useState, useEffect} from 'react'
-import {Text,View, Alert, SafeAreaView,FlatList} from 'react-native'
+import React,{useLayoutEffect, useContext, useState,useEffect} from 'react'
+import {Text,View, SafeAreaView,FlatList} from 'react-native'
 import { color, globalStyle } from '../../utility'
-import {Profile, ShowUsers,ShowCalls,StickyHeader, ShowAllUsers} from '../../component'
-import styles from "../../component/profile/styles";
+import {ShowUsers,ShowCalls, ShowAllUsers} from '../../component'
 import { Store } from '../../context/store'
 import {LOADING_START,LOADING_STOP} from '../../context/actions/types'
 import firebase from 'react-native-firebase'
 import {smallDeviceHeight} from '../../utility/constants'
 import { deviceHeight } from '../../utility/styleHelper/appStyle'
-import { Button, Right ,Icon, Container, Tab, Tabs, TabHeading, Badge, Fab, Picker, Item} from 'native-base'
+import { Button, Icon, Tab, Tabs, TabHeading, Badge, Fab,} from 'native-base'
 import { TouchableOpacity } from 'react-native-gesture-handler'
+import moment from 'moment/min/moment-with-locales.min'
 import{ Menu, 
   MenuProvider,
   MenuOptions,
@@ -21,15 +21,17 @@ import{ Menu,
 import style from './styles'
 
 const { SlideInMenu } = renderers;
-export default ({navigation}) =>{
+
+export default ({navigation}) => {
 const uuid = firebase.auth().currentUser.uid;  
 const globalState = useContext(Store)
 const {dispatchLoaderAction} = globalState
 const [getScrollPosition, setScrollPosition] = useState(0);
 const [allUsers, setAllUsers] = useState([]);
-
+const [lastMessage, setLastMessage] = useState([]);
+let currentDate = moment(new Date()).format('ll').toUpperCase()
 useLayoutEffect(() => {
-      
+      try{
         navigation.setOptions({
           headerStyle: {backgroundColor: color.DARK_GRAY},
             headerTitle:
@@ -37,17 +39,17 @@ useLayoutEffect(() => {
              headerLeft: () => (
               <Text style={style.TextScreen} >Dashboard</Text>
              ),
-          headerRight: () => (
-            
+          headerRight: () => (  
             <View flexDirection= "row" > 
-            <TouchableOpacity onPress={()=>navigation.replace('Search')}>
+            <TouchableOpacity onPress={()=>navigation.navigate('Search')}>
             <Button transparent>
             <Icon type="MaterialIcons" name ="search" style= {{color:color.WHITE}}/>
             </Button>
             </TouchableOpacity>
             <TouchableOpacity>
             <Button transparent>
-            <MenuProvider style={{ flexDirection: 'row'}} style={{width:80}}>
+          
+          <MenuProvider style={{ flexDirection: 'row'}} style={{width:80}}>
             <Menu name="numbers" renderer={SlideInMenu} opened0={true} >
               <MenuTrigger triggerTouchable={{activeOpacity: 1,}}>
                 <Icon
@@ -58,44 +60,81 @@ useLayoutEffect(() => {
               </MenuTrigger>
               <MenuOptions>
             <MenuOption value={"Settings"} >
-              <Text onPress={()=>{navigation.replace('Settings')}}>Settings</Text>
+              <Text onPress={()=>{navigation.navigate('Settings')}}>Settings</Text>
             </MenuOption>
               </MenuOptions>
             </Menu>
           </MenuProvider>
+      
           </Button>
           </TouchableOpacity>
           </View>
            )
         });
-      }, [navigation]);
+      }catch(err){
+        console.log(err)
+      }
+    },[navigation]);
 
-   React.useEffect(() => {
+ useEffect(() => {
+   
      //show all users in Real-time database
-        dispatchLoaderAction({
-          type: LOADING_START,
-        });
         try{
+          dispatchLoaderAction({
+            type: LOADING_START,
+          });
+          let users = [];
+          let lastMsg = [];
+          dispatchLoaderAction({
+            type: LOADING_START,
+          });
           firebase.database()
           .ref('users')
           .on('value',(dataSnapshot)=>{
-            let users = [];
-            
-            dataSnapshot.forEach((child)=>{
-              if(uuid !== child.val().uuid){
+            dataSnapshot.forEach((child, i)=>{
+              if(uuid !== child.val().uuid ){
                 users.push({
-                  id: child.val().uuid,
-                  name: child.val().name,
-                  profileImg: child.val().profileImage,
-                })
-              }
-            })
-            setAllUsers(users);
-            dispatchLoaderAction({
-              type: LOADING_STOP,
-            });
-          })
-
+                 id: child.val().uuid,
+                 name: child.val().name,
+                 profileImg: child.val().profileImage,
+             })
+            }
+            
+              dispatchLoaderAction({
+                type: LOADING_START,
+              });
+           firebase.database()
+        .ref('messages')
+        .child(uuid)
+        .child(child.val().uuid)
+        .orderByChild('createdAt')
+        .on('value',(dataSnapshot)=>{ 
+          dataSnapshot.forEach((childs)=>{  
+            let newmessage = {
+            id: child.val().uuid,
+            name: child.val().name,
+            profileImg: child.val().profileImage,
+            reciever:childs.val().message.reciever,
+            lastMssg:childs.val().message.msg,
+            createdAt:childs.val().message.createdAt,
+            dates:childs.val().message.date,
+            }
+            lastMsg = lastMsg.filter(function(obj){
+                return obj.name != newmessage.name
+            }) 
+          lastMsg.push(newmessage)
+          setLastMessage(lastMsg)
+          dispatchLoaderAction({
+            type: LOADING_STOP,
+          });
+          })     
+          })     
+        })
+          })  
+          setAllUsers(users);
+          dispatchLoaderAction({
+            type: LOADING_STOP,
+          });
         }catch(error){
           dispatchLoaderAction({
             type: LOADING_STOP,
@@ -103,8 +142,8 @@ useLayoutEffect(() => {
           alert(error)
         }
         
-      }, []);
-    
+      }, [navigation])
+      
       // * ON IMAGE TAP
     
     const imgTap = (profileImg, name) =>{
@@ -121,7 +160,7 @@ useLayoutEffect(() => {
         })
       }
     }
-
+   
     // * ON NAME TAP 
   
     const nameTap = (profileImg,name,guestUserId) =>{
@@ -132,7 +171,6 @@ useLayoutEffect(() => {
           guestUserId,
           currentUserId:uuid
         })
-
       }
       else{
         navigation.navigate('Chat',{
@@ -142,7 +180,6 @@ useLayoutEffect(() => {
           currentUserId:uuid
         })
       }
-
     }
     // * GET OPACITY
     const getOpacity = () =>{
@@ -171,18 +208,8 @@ useLayoutEffect(() => {
            <Text style={style.BadgeText}>2</Text>
          </Badge>
        </TabHeading>}>
-        {
-            getScrollPosition > getOpacity() && (
-              <StickyHeader
-              name={name}
-              img={profileImg}
-              onImgTap={()=>imgTap(profileImg,name)}
-              />
-            )}
-          
           <FlatList
-          alwaysBounceVertical = {false}
-          data= {allUsers}
+          data= {lastMessage}
           keyExtractor={(_, index)=>index.toString()}
           onScroll={(event)=> setScrollPosition(event.nativeEvent.contentOffset.y)}
           ListHeaderComponent={
@@ -196,13 +223,16 @@ useLayoutEffect(() => {
            </View>
           }
           renderItem={({item})=>(
-            <ShowUsers name={item.name} img={item.profileImg}
+            <ShowUsers
+            name={item.name} img={item.profileImg}
             onImgTap={()=>imgTap(item.profileImg,item.name)}
             onNameTap={()=>nameTap(item.profileImg,item.name,item.id)}
+            lastMessages={item.lastMssg}
+            date={item.dates == currentDate ? date= item.createdAt : date= item.dates}
             />
-          )}
+    )}
           />
-          <Fab style={style.FabChat} position="bottomRight" onPress={()=>navigation.replace('Search')}>
+          <Fab style={style.FabChat} position="bottomRight" onPress={()=>navigation.navigate('Search')}>
             <Icon style={{color:color.BLACK}} name="chat" type="MaterialIcons"/>
           </Fab>
      </Tab>
@@ -211,16 +241,7 @@ useLayoutEffect(() => {
      heading={
        <TabHeading style={style.TabBackgroundColor}>
          <Text style={style.Text}>CALLS</Text>
-      </TabHeading>}>
-          {
-            getScrollPosition > getOpacity() && (
-              <StickyHeader
-              name={name}
-              img={profileImg}
-              onImgTap={()=>imgTap(profileImg,name)}
-              />
-            )}
-          
+      </TabHeading>}>  
           <FlatList
           alwaysBounceVertical = {false}
           data= {allUsers}
@@ -249,13 +270,6 @@ useLayoutEffect(() => {
        <TabHeading style={style.TabBackgroundColor}>
          <Text style={style.Text}>CONTACTS</Text>
        </TabHeading>}>
-          {
-            getScrollPosition > getOpacity() && (
-              <StickyHeader
-              name={name}
-              img={profileImg}
-              onImgTap={()=>imgTap(profileImg,name)}/>
-            )} 
           <FlatList
           alwaysBounceVertical = {false}
           data= {allUsers}

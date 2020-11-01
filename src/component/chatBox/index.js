@@ -9,7 +9,7 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import { Icon } from "native-base";
 import { format } from 'date-fns';
 let showIcon = true
-const ChatBox = ({ userId, msg, img,date, onImgTap,onAudioTap,playTimes,onAudioPause,show}) => {
+const ChatBox = ({ userId, msg, img,date, onImgTap, onAudioTap, playTimes, onAudioPause, show}) => {
   showIcon = show
   const uuid = firebase.auth().currentUser.uid;
   let isCurrentUser = userId === uuid ? true : false;
