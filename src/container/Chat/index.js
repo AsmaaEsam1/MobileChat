@@ -312,7 +312,6 @@ const onPausePlay = async (e) => {
         keyExtractor={(indexs)=>indexs}
         renderItem={
           ()=> renderChat()
-          
 }/>
          
         {/*Send Message*/} 
